@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bases Relacionales vs NoSQL - Enfoques de Diseño</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0c0a1a;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #201b4e 0%, #080612 70%);
+            --glass-card: rgba(22, 18, 48, 0.5);
+            --glass-border: rgba(72, 60, 154, 0.4);
+            --glass-hover-border: rgba(122, 107, 230, 0.8);
+            --text-primary: #f3f0ff;
+            --text-secondary: #a7a1c7;
+            --accent: #483C9A;
+            --accent-bright: #7a6be6;
+            --accent-glow: rgba(72, 60, 154, 0.45);
+            --modal-bg: rgba(12, 10, 26, 0.92);
+            --modal-card: rgba(26, 22, 58, 0.88);
+            --btn-bg: rgba(72, 60, 154, 0.25);
+            --btn-hover: rgba(72, 60, 154, 0.5);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.light-theme {
+            --bg-base: #f5f3ff;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #e2dcff 0%, #ede9fe 70%);
+            --glass-card: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(72, 60, 154, 0.35);
+            --glass-hover-border: rgba(72, 60, 154, 0.85);
+            --text-primary: #1f184e;
+            --text-secondary: #564e80;
+            --accent: #483C9A;
+            --accent-bright: #483C9A;
+            --accent-glow: rgba(72, 60, 154, 0.25);
+            --modal-bg: rgba(245, 243, 255, 0.92);
+            --modal-card: rgba(255, 255, 255, 0.92);
+            --btn-bg: rgba(72, 60, 154, 0.15);
+            --btn-hover: rgba(72, 60, 154, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: var(--bg-gradient);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 90px 20px 50px;
+            box-sizing: border-box;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        .controls-container {
+            position: fixed;
+            top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 20;
+        }
+
+        .instruction {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            padding: 10px 22px;
+            border-radius: 30px;
+            color: var(--accent-bright);
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle-btn {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--glass-hover-border);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        .slider-wrapper {
+            position: relative;
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slider-container {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 24px;
+            padding: 10px 5px;
+            box-sizing: border-box;
+        }
+
+        .slider-track {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            width: 100%;
+        }
+
+        .slide {
+            min-width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        /* Glass Slider Card */
+        .card {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 35px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            min-height: 230px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: var(--glass-hover-border);
+            transform: translateY(-4px);
+            box-shadow: 0 18px 40px var(--accent-glow);
+        }
+
+        .card h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .card .excerpt {
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card .btn-open {
+            margin-top: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent-bright);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: var(--btn-bg);
+            transition: var(--transition);
+        }
+
+        .card:hover .btn-open {
+            background: var(--btn-hover);
+            transform: translateX(4px);
+        }
+
+        /* Navigation Controls */
+        .nav-btn {
+            position: absolute;
+            top: 42%;
+            transform: translateY(-50%);
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            color: var(--accent-bright);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: var(--transition);
+            z-index: 10;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-btn:hover {
+            border-color: var(--glass-hover-border);
+            background: var(--btn-hover);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .nav-btn.prev { left: -25px; }
+        .nav-btn.next { right: -25px; }
+
+        @media (max-width: 850px) {
+            .nav-btn.prev { left: 5px; }
+            .nav-btn.next { right: 5px; }
+        }
+
+        /* Pagination Dots */
+        .dots-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dot.active {
+            background: var(--accent-bright);
+            width: 28px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--modal-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--modal-card);
+            border: 1px solid var(--glass-hover-border);
+            border-radius: 24px;
+            max-width: 620px;
+            width: 100%;
+            max-height: 82vh;
+            overflow-y: auto;
+            padding: 35px 30px;
+            box-sizing: border-box;
+            position: relative;
+            transform: scale(0.92) translateY(10px);
+            transition: var(--transition);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 30px var(--accent-glow);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--accent-bright);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--accent);
+            color: #ffffff;
+            transform: rotate(90deg);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .modal-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-content li {
+            position: relative;
+            padding-left: 24px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .modal-content li::before {
+            content: '•';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            color: var(--accent-bright);
+            font-size: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-bright);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls-container">
+        <div class="instruction">Haga clic en la tarjeta para ampliar la información</div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">
+            <span>🌙</span> Modo Oscuro
+        </button>
+    </div>
+
+    <div class="slider-wrapper">
+        <button class="nav-btn prev" onclick="moveSlide(-1)">‹</button>
+        
+        <div class="slider-container">
+            <div class="slider-track" id="sliderTrack">
+                
+                <!-- Slide 1: Relational -->
+                <div class="slide">
+                    <div class="card" onclick="openModal('modal-1')">
+                        <div>
+                            <h3>Bases Relacionales - Enfoque de Diseño</h3>
+                            <p class="excerpt">En bases relacionales, el diseño parte normalmente de preguntas orientadas a la estructura, entidades y reglas de integridad.</p>
+                        </div>
+                        <div class="btn-open">Ver detalle ↗</div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: NoSQL -->
+                <div class="slide">
+                    <div class="card" onclick="openModal('modal-2')">
+                        <div>
+                            <h3>Bases NoSQL - Enfoque de Diseño</h3>
+                            <p class="excerpt">En NoSQL, el diseño cambia hacia patrones de acceso, consultas frecuentes y distribución entre nodos.</p>
+                        </div>
+                        <div class="btn-open">Ver detalle ↗</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <button class="nav-btn next" onclick="moveSlide(1)">›</button>
+
+        <div class="dots-container" id="dotsContainer">
+            <div class="dot active" onclick="goToSlide(0)"></div>
+            <div class="dot" onclick="goToSlide(1)"></div>
+        </div>
+    </div>
+
+    <!-- Modal 1: Relational -->
+    <div class="modal-overlay" id="modal-1" onclick="closeModalOnOverlay(event, 'modal-1')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-1')">✕</button>
+            <h3>En bases relacionales, el diseño parte normalmente de preguntas como:</h3>
+            <ul>
+                <li>¿Cuáles son las entidades del negocio?</li>
+                <li>¿Qué relaciones existen?</li>
+                <li>¿Cómo evitar duplicación de datos?</li>
+                <li>¿Qué reglas de integridad deben cumplirse?</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal 2: NoSQL -->
+    <div class="modal-overlay" id="modal-2" onclick="closeModalOnOverlay(event, 'modal-2')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-2')">✕</button>
+            <h3>En NoSQL, las preguntas cambian hacia:</h3>
+            <ul>
+                <li>¿Cómo consultará la aplicación los datos?</li>
+                <li>¿Qué lecturas serán más frecuentes?</li>
+                <li>¿Cómo crecerá el volumen?</li>
+                <li>¿Qué información conviene almacenar junta?</li>
+                <li>¿Cómo se distribuirán los datos entre nodos?</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 2;
+
+        function updateSlider() {
+            const track = document.getElementById('sliderTrack');
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function moveSlide(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            updateSlider();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlider();
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function closeModalOnOverlay(event, id) {
+            if (event.target === document.getElementById(id)) {
+                closeModal(id);
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeBtn');
+            body.classList.toggle('light-theme');
+
+            if (body.classList.contains('light-theme')) {
+                btn.innerHTML = '<span>☀️</span> Modo Claro';
+            } else {
+                btn.innerHTML = '<span>🌙</span> Modo Oscuro';
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            } else if (event.key === 'ArrowRight') {
+                moveSlide(1);
+            } else if (event.key === 'ArrowLeft') {
+                moveSlide(-1);
+            }
+        });
+    </script>
+
+</body>
+
+</html>
