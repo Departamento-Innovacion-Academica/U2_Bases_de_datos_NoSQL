@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bases de Datos NoSQL y Sistemas Distribuidos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-soft: #a394ff;
+            --secondary-soft: #6352cf;
+            --bg-dark: #120e2e;
+            --card-bg: linear-gradient(135deg, #2a2060, #1b1440);
+            --modal-bg: #18123c;
+            --accent-glow: rgba(163, 148, 255, 0.4);
+            --text-main: #f0edff;
+            --badge-bg: rgba(163, 148, 255, 0.12);
+            --badge-border: rgba(163, 148, 255, 0.35);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 0%, #2f2575 0%, #120e2e 70%);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 80px 20px 40px;
+            box-sizing: border-box;
+        }
+
+        /* Floating Instruction Header */
+        .instruction {
+            position: fixed;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 30px;
+            border-radius: 30px;
+            border: 1px solid rgba(163, 148, 255, 0.3);
+            color: var(--primary-soft);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            animation: floatAnim 4s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        @keyframes floatAnim {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        /* 2x2 Responsive Grid Layout */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 950px;
+            width: 100%;
+        }
+
+        @media (max-width: 700px) {
+            .grid-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(163, 148, 255, 0.25);
+            border-radius: 20px;
+            padding: 28px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            min-height: 160px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--primary-soft);
+            box-shadow: 0 12px 35px var(--accent-glow);
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            width: 100%;
+        }
+
+        /* Number Badge Box */
+        .badge-num {
+            background: var(--badge-bg);
+            border: 1.5px solid var(--badge-border);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            flex-grow: 1;
+            padding-top: 4px;
+        }
+
+        .card .btn-open {
+            margin-top: 22px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-soft);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+            align-self: flex-end;
+        }
+
+        .card:hover .btn-open {
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+
+        /* Modal Window Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 7, 26, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            border: 1px solid var(--primary-soft);
+            border-radius: 24px;
+            max-width: 620px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 35px 30px;
+            box-sizing: border-box;
+            position: relative;
+            transform: scale(0.9);
+            transition: var(--transition-smooth);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(163, 148, 255, 0.15);
+            border: none;
+            color: var(--primary-soft);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transition-smooth);
+        }
+
+        .modal-close:hover {
+            background: var(--primary-soft);
+            color: var(--bg-dark);
+        }
+
+        .modal-header-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(163, 148, 255, 0.2);
+            padding-bottom: 15px;
+            padding-right: 35px;
+        }
+
+        .modal-content h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: #ffffff;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.4;
+        }
+
+        .modal-content p {
+            font-size: 0.98rem;
+            line-height: 1.75;
+            color: #d8d3f8;
+            margin-bottom: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(163, 148, 255, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Instruction Header -->
+    <div class="instruction">haga clic sobre las tarjetas para ampliar la información</div>
+
+    <div class="grid-cards">
+        
+        <!-- Card 1 -->
+        <div class="card" onclick="openModal('modal-1')">
+            <div class="card-header">
+                <div class="badge-num">1</div>
+                <h3>Comprender los fundamentos de las bases de datos NoSQL</h3>
+            </div>
+            <div class="btn-open">Ver detalle ↗</div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card" onclick="openModal('modal-2')">
+            <div class="card-header">
+                <div class="badge-num">2</div>
+                <h3>Diferenciar los modelos de datos utilizados en bases de datos NoSQL</h3>
+            </div>
+            <div class="btn-open">Ver detalle ↗</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card" onclick="openModal('modal-3')">
+            <div class="card-header">
+                <div class="badge-num">3</div>
+                <h3>Analizar los principios de funcionamiento de los sistemas distribuidos</h3>
+            </div>
+            <div class="btn-open">Ver detalle ↗</div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card" onclick="openModal('modal-4')">
+            <div class="card-header">
+                <div class="badge-num">4</div>
+                <h3>Evaluar las ventajas y limitaciones de las tecnologías NoSQL</h3>
+            </div>
+            <div class="btn-open">Ver detalle ↗</div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="card" onclick="openModal('modal-5')">
+            <div class="card-header">
+                <div class="badge-num">5</div>
+                <h3>Identificar escenarios de aplicación de las bases de datos NoSQL</h3>
+            </div>
+            <div class="btn-open">Ver detalle ↗</div>
+        </div>
+
+    </div>
+
+    <!-- Modal 1 -->
+    <div class="modal-overlay" id="modal-1" onclick="closeModalOnOverlay(event, 'modal-1')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-1')">✕</button>
+            <div class="modal-header-container">
+                <div class="badge-num">1</div>
+                <h3>Comprender los fundamentos de las bases de datos NoSQL</h3>
+            </div>
+            <p>Analizar el surgimiento de las bases de datos NoSQL y comprender las razones tecnológicas y organizacionales que han impulsado su adopción en el manejo de grandes volúmenes de información y aplicaciones modernas.</p>
+        </div>
+    </div>
+
+    <!-- Modal 2 -->
+    <div class="modal-overlay" id="modal-2" onclick="closeModalOnOverlay(event, 'modal-2')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-2')">✕</button>
+            <div class="modal-header-container">
+                <div class="badge-num">2</div>
+                <h3>Diferenciar los modelos de datos utilizados en bases de datos NoSQL</h3>
+            </div>
+            <p>Identificar las características principales de los distintos tipos de bases de datos NoSQL, tales como bases de datos clave-valor, documentales, columnares y de grafos, reconociendo sus estructuras de almacenamiento y escenarios de aplicación.</p>
+        </div>
+    </div>
+
+    <!-- Modal 3 -->
+    <div class="modal-overlay" id="modal-3" onclick="closeModalOnOverlay(event, 'modal-3')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-3')">✕</button>
+            <div class="modal-header-container">
+                <div class="badge-num">3</div>
+                <h3>Analizar los principios de funcionamiento de los sistemas distribuidos</h3>
+            </div>
+            <p>Comprender conceptos fundamentales relacionados con arquitecturas distribuidas, incluyendo el teorema CAP y el modelo BASE, y su impacto en la consistencia, disponibilidad y tolerancia a fallos en sistemas de gestión de datos.</p>
+        </div>
+    </div>
+
+    <!-- Modal 4 -->
+    <div class="modal-overlay" id="modal-4" onclick="closeModalOnOverlay(event, 'modal-4')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-4')">✕</button>
+            <div class="modal-header-container">
+                <div class="badge-num">4</div>
+                <h3>Evaluar las ventajas y limitaciones de las tecnologías NoSQL</h3>
+            </div>
+            <p>Comparar las bases de datos NoSQL con los sistemas de gestión de bases de datos relacionales, analizando sus ventajas, limitaciones y criterios de selección según las necesidades de las aplicaciones y los entornos de procesamiento de datos.</p>
+        </div>
+    </div>
+
+    <!-- Modal 5 -->
+    <div class="modal-overlay" id="modal-5" onclick="closeModalOnOverlay(event, 'modal-5')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-5')">✕</button>
+            <div class="modal-header-container">
+                <div class="badge-num">5</div>
+                <h3>Identificar escenarios de aplicación de las bases de datos NoSQL</h3>
+            </div>
+            <p>Reconocer los contextos tecnológicos y organizacionales en los cuales el uso de bases de datos NoSQL resulta apropiado, considerando factores como la escalabilidad, el volumen de datos y la flexibilidad en el manejo de la información.</p>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function closeModalOnOverlay(event, id) {
+            if (event.target === document.getElementById(id)) {
+                closeModal(id);
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>
