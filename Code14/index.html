@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparativa - Modelo Embebido vs Modelo Referenciado</title>
+  <style>
+    /* Estilos generales: centra todo el contenedor principal en la pantalla */
+    body {
+      background-color: #121214;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      font-family: 'Fira Code', 'Cascadia Code', Consolas, Monaco, monospace;
+    }
+
+    /* Contenedor principal centrado */
+    .comparison-container {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    /* Sección individual con título, descripción y ventana de código */
+    .section-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; /* Alinea los textos a la izquierda dentro de su espacio */
+      width: 100%;
+      gap: 8px;
+    }
+
+    /* Títulos de sección alineados a la izquierda */
+    .section-title {
+      color: #e1e1e6;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-align: left;
+      width: 100%;
+    }
+
+    /* Subtítulos o descripciones informativas alineados a la izquierda */
+    .section-desc {
+      color: #8a8a9e;
+      font-size: 13px;
+      text-align: left;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    /* Ventana tipo terminal centrada en la pantalla pero con el código y texto interno a la izquierda */
+    .code-window {
+      background-color: #1e1e24;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    /* Barra superior de la ventana */
+    .window-header {
+      background-color: #18181c;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .close { background-color: #ff5f56; }
+    .minimize { background-color: #ffbd2e; }
+    .maximize { background-color: #27c93f; }
+
+    .window-filename {
+      color: #7a7a8c;
+      font-size: 13px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Área donde se escribe el código (alineada a la izquierda) */
+    .code-body {
+      padding: 24px 28px;
+      color: #d4d4d4;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      text-align: left;
+      min-height: 90px;
+    }
+
+    /* Paleta de colores (JSON Syntax Highlighting) */
+    .token-key    { color: #9cdcfe; }
+    .token-string { color: #ce9178; }
+    .token-number { color: #b5cea8; }
+
+    /* Cursor parpadeante fino (estilo editor) */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 16px;
+      background-color: #ffffff;
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="comparison-container">
+    
+    <!-- Sección 1: Modelo embebido -->
+    <div class="section-group">
+      <div class="section-title">Modelo embebido</div>
+      <div class="section-desc">Excelente para leer pedido completo.</div>
+      <div class="code-window">
+        <div class="window-header">
+          <span class="btn-circle close"></span>
+          <span class="btn-circle minimize"></span>
+          <span class="btn-circle maximize"></span>
+          <span class="window-filename">modelo_embebido.json</span>
+        </div>
+        <div class="code-body"><span id="code-content-1"></span><span class="cursor" id="cursor-1"></span></div>
+      </div>
+    </div>
+
+    <!-- Sección 2: Modelo referenciado -->
+    <div class="section-group">
+      <div class="section-title">Modelo referenciado</div>
+      <div class="section-desc">Adecuado si los productos cambian frecuentemente en el catálogo central.</div>
+      <div class="code-window">
+        <div class="window-header">
+          <span class="btn-circle close"></span>
+          <span class="btn-circle minimize"></span>
+          <span class="btn-circle maximize"></span>
+          <span class="window-filename">modelo_referenciado.json</span>
+        </div>
+        <div class="code-body"><span id="code-content-2"></span><span class="cursor" id="cursor-2" style="display: none;"></span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Tokens para el primer bloque (Modelo embebido)
+    const tokens1 = [
+      { text: "{\n  " },
+      { text: '"pedido"', class: "token-key" },
+      { text: ": " },
+      { text: "9001", class: "token-number" },
+      { text: ",\n  " },
+      { text: '"cliente"', class: "token-key" },
+      { text: ": " },
+      { text: '"Ana"', class: "token-string" },
+      { text: ",\n  " },
+      { text: '"items"', class: "token-key" },
+      { text: ": [\n    {" },
+      { text: '"producto"', class: "token-key" },
+      { text: ": " },
+      { text: '"Mouse"', class: "token-string" },
+      { text: ", " },
+      { text: '"precio"', class: "token-key" },
+      { text: ": " },
+      { text: "80", class: "token-number" },
+      { text: "},\n    {" },
+      { text: '"producto"', class: "token-key" },
+      { text: ": " },
+      { text: '"Teclado"', class: "token-string" },
+      { text: ", " },
+      { text: '"precio"', class: "token-key" },
+      { text: ": " },
+      { text: "150", class: "token-number" },
+      { text: "}\n  ]\n}" }
+    ];
+
+    // Tokens para el segundo bloque (Modelo referenciado)
+    const tokens2 = [
+      { text: "{\n  " },
+      { text: '"pedido"', class: "token-key" },
+      { text: ": " },
+      { text: "9001", class: "token-number" },
+      { text: ",\n  " },
+      { text: '"cliente"', class: "token-key" },
+      { text: ": " },
+      { text: '"Ana"', class: "token-string" },
+      { text: ",\n  " },
+      { text: '"items_ids"', class: "token-key" },
+      { text: ": [" },
+      { text: "10", class: "token-number" },
+      { text: ", " },
+      { text: "11", class: "token-number" },
+      { text: "]\n}" }
+    ];
+
+    const container1 = document.getElementById("code-content-1");
+    const container2 = document.getElementById("code-content-2");
+    const cursor1 = document.getElementById("cursor-1");
+    const cursor2 = document.getElementById("cursor-2");
+
+    let tIndex1 = 0, cIndex1 = 0, el1 = null;
+    let tIndex2 = 0, cIndex2 = 0, el2 = null;
+
+    // Animación secuencial: escribe el primer bloque y luego el segundo
+    function typeBlock1() {
+      if (tIndex1 < tokens1.length) {
+        const token = tokens1[tIndex1];
+        if (cIndex1 === 0) {
+          if (token.class) {
+            el1 = document.createElement("span");
+            el1.className = token.class;
+            container1.appendChild(el1);
+          } else {
+            el1 = document.createTextNode("");
+            container1.appendChild(el1);
+          }
+        }
+
+        const char = token.text.charAt(cIndex1);
+        if (token.class) {
+          el1.textContent += char;
+        } else {
+          el1.nodeValue += char;
+        }
+
+        cIndex1++;
+        if (cIndex1 === token.text.length) {
+          cIndex1 = 0;
+          tIndex1++;
+        }
+        setTimeout(typeBlock1, 20);
+      } else {
+        cursor1.style.display = "none";
+        cursor2.style.display = "inline-block";
+        setTimeout(typeBlock2, 300);
+      }
+    }
+
+    function typeBlock2() {
+      if (tIndex2 < tokens2.length) {
+        const token = tokens2[tIndex2];
+        if (cIndex2 === 0) {
+          if (token.class) {
+            el2 = document.createElement("span");
+            el2.className = token.class;
+            container2.appendChild(el2);
+          } else {
+            el2 = document.createTextNode("");
+            container2.appendChild(el2);
+          }
+        }
+
+        const char = token.text.charAt(cIndex2);
+        if (token.class) {
+          el2.textContent += char;
+        } else {
+          el2.nodeValue += char;
+        }
+
+        cIndex2++;
+        if (cIndex2 === token.text.length) {
+          cIndex2 = 0;
+          tIndex2++;
+        }
+        setTimeout(typeBlock2, 20);
+      }
+    }
+
+    setTimeout(typeBlock1, 500);
+  </script>
+
+</body>
+</html>
